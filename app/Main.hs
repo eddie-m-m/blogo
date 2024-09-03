@@ -1,35 +1,57 @@
 module Main where
 
 main :: IO ()
-main = putStrLn myhtml
+main = putStrLn (render_ myhtml)
 
-myhtml :: String
+myhtml :: Html
 myhtml =
-  makeHtml
+  html_
     "Refugium, remix"
-    (h1_ "Reflections")
-    <> (p_ "Reflection 1" <> p_ "Reflection 2")
+    ( append_
+        (h1_ "Reflections")
+        ( append_
+            (p_ "Reflection 1")
+            (p_ "Reflection 2")
+        )
+    )
 
-makeHtml :: String -> String -> String
-makeHtml title body = html_ (head_ (title_ title) <> body_ body)
+newtype Html
+  = Html String
+
+newtype Structure
+  = Structure String
+
+type Title =
+  String
+
+html_ :: Title -> Structure -> Html
+html_ title content =
+  Html
+    ( el
+        "html"
+        ( el "head" (el "title" title)
+            <> el "body" (getStructureString content)
+        )
+    )
+
+p_ :: String -> Structure
+p_ = Structure . el "p"
+
+h1_ :: String -> Structure
+h1_ = Structure . el "h1"
 
 el :: String -> String -> String
 el tag content = "<" <> tag <> ">" <> content <> "</" <> tag <> ">"
 
-html_ :: String -> String
-html_ = el "html"
+append_ :: Structure -> Structure -> Structure
+append_ (Structure a) (Structure b) = Structure (a <> b)
 
-body_ :: String -> String
-body_ = el "body"
+getStructureString :: Structure -> String
+getStructureString content =
+  case content of
+    Structure str -> str
 
-head_ :: String -> String
-head_ = el "head"
-
-title_ :: String -> String
-title_ = el "title"
-
-p_ :: String -> String
-p_ = el "p"
-
-h1_ :: String -> String
-h1_ = el "h1"
+render_ :: Html -> String
+render_ html =
+  case html of
+    Html str -> str
